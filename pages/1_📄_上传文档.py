@@ -17,7 +17,7 @@ if os.path.exists(dotenv_path):
 
 # 初始化会话状态，优先使用环境变量
 if 'dify_dataset_api_key' not in st.session_state:
-    st.session_state.dify_dataset_api_key = os.environ.get('DIFY_DATASET_API_KEY', "dataset-pJPuLRgQ5nxTH84GYEb8QBin")
+    st.session_state.dify_dataset_api_key = os.environ.get('DIFY_DATASET_API_KEY', os.environ.get('DIFY_API_KEY', ""))
 
 # 初始化session state变量
 if 'selected_kb_id' not in st.session_state:

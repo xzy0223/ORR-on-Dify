@@ -22,6 +22,14 @@ if [ -z "$DIFY_CONSOL_API_KEY" ]; then
     exit 1
 fi
 
+# 检查 Dataset API Key
+if [ -z "$DIFY_DATASET_API_KEY" ]; then
+    echo "警告: 环境变量 DIFY_DATASET_API_KEY 未设置"
+    echo "将使用 DIFY_API_KEY 作为 Dataset API Key"
+    echo "如需上传文档功能，请在 Dify 控制台知识库页面生成 Dataset API Key 并设置环境变量:"
+    echo "export DIFY_DATASET_API_KEY=your-dataset-api-key"
+fi
+
 # 检查 Lambda API 环境变量
 if [ -z "$GET_LENS_INFO_API_URL" ]; then
     echo "警告: 环境变量 GET_LENS_INFO_API_URL 未设置"
@@ -66,6 +74,8 @@ DIFY_API_KEY=${DIFY_API_KEY}
 DIFY_API_BASE_URL=${DIFY_API_BASE_URL}/v1
 DIFY_CONSOL_API_BASE_URL=${DIFY_API_BASE_URL}/console/api/apps
 DIFY_CONSOL_API_KEY=${DIFY_CONSOL_API_KEY}
+# Dify Dataset API Key (用于上传文档)
+DIFY_DATASET_API_KEY=${DIFY_DATASET_API_KEY:-${DIFY_API_KEY}}
 EOL
 
 # 设置启动脚本
