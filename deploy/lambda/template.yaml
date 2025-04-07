@@ -1,0 +1,445 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation template for deploying Lambda functions with API Gateway for orr-on-dify project'
+
+Parameters:
+  Stage:
+    Type: String
+    Default: dev
+    Description: Deployment stage (e.g., dev, prod)
+    AllowedValues:
+      - dev
+      - test
+      - prod
+  GetLensInfoCodeS3Bucket:
+    Type: String
+    Description: S3 bucket containing the get_lens_info Lambda function code
+  GetLensInfoCodeS3Key:
+    Type: String
+    Description: S3 key for the get_lens_info Lambda function code
+  OperateWaToolCodeS3Bucket:
+    Type: String
+    Description: S3 bucket containing the operate_wa_tool Lambda function code
+  OperateWaToolCodeS3Key:
+    Type: String
+    Description: S3 key for the operate_wa_tool Lambda function code
+
+Resources:
+  # Lambda Functions
+  GetLensInfoFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub get_lens_info-${Stage}
+      Code:
+        S3Bucket: !Ref GetLensInfoCodeS3Bucket
+        S3Key: !Ref GetLensInfoCodeS3Key
+      Handler: get_lens_info.lambda_handler
+      Runtime: python3.9
+      MemorySize: 128
+      Timeout: 30
+      Role: !GetAtt GetLensInfoExecutionRole.Arn
+
+  OperateWaToolFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub operate-wa-tool-${Stage}
+      Code:
+        S3Bucket: !Ref OperateWaToolCodeS3Bucket
+        S3Key: !Ref OperateWaToolCodeS3Key
+      Handler: operate_wa_tool.lambda_handler
+      Runtime: python3.9
+      MemorySize: 128
+      Timeout: 30
+      Role: !GetAtt OperateWaToolExecutionRole.Arn
+
+  # IAM Roles
+  GetLensInfoExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: WellArchitectedGetLensPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - wellarchitected:GetLens
+                  - wellarchitected:ExportLens
+                Resource: '*'
+
+  OperateWaToolExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: WellArchitectedOperatePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - wellarchitected:CreateWorkload
+                  - wellarchitected:UpdateAnswers
+                Resource: '*'
+
+  # API Gateway for get_lens_info
+  GetLensInfoApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub get_lens_info-API-${Stage}
+      Description: API for get_lens_info Lambda function
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+      Body:
+        openapi: 3.0.1
+        info:
+          title: get_lens_info-API
+          description: Created by AWS Lambda
+          version: !Ref AWS::StackName
+        paths:
+          /get_lens_info:
+            get:
+              operationId: get lens info
+              parameters:
+                - name: lens_alias
+                  in: header
+                  required: true
+                  schema:
+                    type: string
+              responses:
+                '200':
+                  description: 200 response
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/Empty'
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetLensInfoFunction.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: '200'
+                passthroughBehavior: when_no_match
+                contentHandling: CONVERT_TO_TEXT
+                type: aws_proxy
+        components:
+          schemas:
+            Empty:
+              title: Empty Schema
+              type: object
+
+  # API Gateway for operate_wa_tool
+  OperateWaToolApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub operate-wa-tool-API-${Stage}
+      Description: API for operate_wa_tool Lambda function
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+
+  # Request Validator for operate_wa_tool API
+  OperateWaToolRequestValidator:
+    Type: AWS::ApiGateway::RequestValidator
+    Properties:
+      Name: validate-request-body
+      RestApiId: !Ref OperateWaToolApi
+      ValidateRequestBody: true
+      ValidateRequestParameters: false
+
+  # Models for operate_wa_tool API
+  CreateWorkloadModel:
+    Type: AWS::ApiGateway::Model
+    Properties:
+      ContentType: application/json
+      RestApiId: !Ref OperateWaToolApi
+      Name: CreateWorkloadModel
+      Schema:
+        title: CreateWorkloadModel
+        type: object
+        properties:
+          workloadName:
+            type: string
+            description: The name of the workload
+          description:
+            type: string
+            description: A description of the workload
+          environment:
+            type: string
+            enum: [PRODUCTION, PREPRODUCTION, DEVELOPMENT]
+            description: The environment of the workload
+          lenses:
+            type: array
+            items:
+              type: string
+              pattern: ^arn:aws:wellarchitected:[a-z0-9-]+:[0-9]{12}:lens/[a-zA-Z0-9]+$
+            description: An array of lens ARNs to be applied to the workload
+          reviewOwner:
+            type: string
+            description: The owner of the workload review
+        required: [workloadName, environment, lenses, reviewOwner]
+
+  UpdateWorkloadReviewModel:
+    Type: AWS::ApiGateway::Model
+    Properties:
+      ContentType: application/json
+      RestApiId: !Ref OperateWaToolApi
+      Name: UpdateWorkloadReviewModel
+      Schema:
+        title: UpdateWorkloadReviewModel
+        type: object
+        properties:
+          workloadId:
+            type: string
+            pattern: ^[a-f0-9]{32}$
+            description: The unique identifier of the workload
+          lensAlias:
+            type: string
+            pattern: ^arn:aws:wellarchitected:[a-z0-9-]+:[0-9]{12}:lens/[a-zA-Z0-9]+$
+            description: The ARN of the lens
+          questionId:
+            type: string
+            description: The identifier of the question being answered
+          choiceUpdates:
+            type: object
+            properties:
+              selectedChoices:
+                type: array
+                items:
+                  type: string
+                description: An array of selected choice identifiers
+              notes:
+                type: string
+                description: Additional notes for the answer
+            required: [selectedChoices]
+            description: Updates to the choices for the question
+        required: [workloadId, lensAlias, questionId, choiceUpdates]
+
+  # Resources for operate_wa_tool API
+  OperateWaToolWorkloadResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref OperateWaToolApi
+      ParentId: !GetAtt OperateWaToolApi.RootResourceId
+      PathPart: workload
+
+  OperateWaToolWorkloadReviewResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref OperateWaToolApi
+      ParentId: !Ref OperateWaToolWorkloadResource
+      PathPart: review
+
+  # Methods for operate_wa_tool API
+  OperateWaToolWorkloadPostMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref OperateWaToolApi
+      ResourceId: !Ref OperateWaToolWorkloadResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      RequestValidatorId: !Ref OperateWaToolRequestValidator
+      RequestModels:
+        application/json: !Ref CreateWorkloadModel
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${OperateWaToolFunction.Arn}/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        ContentHandling: CONVERT_TO_TEXT
+      MethodResponses:
+        - StatusCode: '200'
+          ResponseModels:
+            application/json: 'Empty'
+
+  OperateWaToolWorkloadReviewPutMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref OperateWaToolApi
+      ResourceId: !Ref OperateWaToolWorkloadReviewResource
+      HttpMethod: PUT
+      AuthorizationType: NONE
+      RequestValidatorId: !Ref OperateWaToolRequestValidator
+      RequestModels:
+        application/json: !Ref UpdateWorkloadReviewModel
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${OperateWaToolFunction.Arn}/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        ContentHandling: CONVERT_TO_TEXT
+      MethodResponses:
+        - StatusCode: '200'
+          ResponseModels:
+            application/json: 'Empty'
+
+  # CORS for operate_wa_tool API
+  OperateWaToolWorkloadOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref OperateWaToolApi
+      ResourceId: !Ref OperateWaToolWorkloadResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: '200'
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        PassthroughBehavior: WHEN_NO_MATCH
+      MethodResponses:
+        - StatusCode: '200'
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  OperateWaToolWorkloadReviewOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref OperateWaToolApi
+      ResourceId: !Ref OperateWaToolWorkloadReviewResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: '200'
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        PassthroughBehavior: WHEN_NO_MATCH
+      MethodResponses:
+        - StatusCode: '200'
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  # API Gateway Deployments
+  GetLensInfoApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: GetLensInfoApi
+    Properties:
+      RestApiId: !Ref GetLensInfoApi
+      Description: !Sub Deployment for ${Stage} stage
+
+  OperateWaToolApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - OperateWaToolWorkloadPostMethod
+      - OperateWaToolWorkloadReviewPutMethod
+      - OperateWaToolWorkloadOptionsMethod
+      - OperateWaToolWorkloadReviewOptionsMethod
+    Properties:
+      RestApiId: !Ref OperateWaToolApi
+      Description: !Sub Deployment for ${Stage} stage
+
+  # API Gateway Stages
+  GetLensInfoApiStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      DeploymentId: !Ref GetLensInfoApiDeployment
+      RestApiId: !Ref GetLensInfoApi
+      StageName: !Ref Stage
+
+  OperateWaToolApiStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      DeploymentId: !Ref OperateWaToolApiDeployment
+      RestApiId: !Ref OperateWaToolApi
+      StageName: !Ref Stage
+
+  # Lambda permissions
+  GetLensInfoPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref GetLensInfoFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${GetLensInfoApi}/${Stage}/GET/get_lens_info
+
+  # Add permission for API Gateway Test Console
+  GetLensInfoTestPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref GetLensInfoFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${GetLensInfoApi}/test-invoke-stage/GET/get_lens_info
+
+  OperateWaToolPermissionPost:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref OperateWaToolFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${OperateWaToolApi}/${Stage}/POST/workload
+
+  # Add permission for API Gateway Test Console - POST /workload
+  OperateWaToolTestPermissionPost:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref OperateWaToolFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${OperateWaToolApi}/test-invoke-stage/POST/workload
+
+  OperateWaToolPermissionPut:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref OperateWaToolFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${OperateWaToolApi}/${Stage}/PUT/workload/review
+
+  # Add permission for API Gateway Test Console - PUT /workload/review
+  OperateWaToolTestPermissionPut:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref OperateWaToolFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${OperateWaToolApi}/test-invoke-stage/PUT/workload/review
+
+Outputs:
+  GetLensInfoApiEndpoint:
+    Description: API Gateway endpoint URL for get_lens_info API
+    Value: !Sub https://${GetLensInfoApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/get_lens_info
+
+  OperateWaToolApiEndpoint:
+    Description: API Gateway endpoint URL for operate-wa-tool API
+    Value: !Sub https://${OperateWaToolApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/workload
+
+  GetLensInfoFunction:
+    Description: Get Lens Info Lambda Function ARN
+    Value: !GetAtt GetLensInfoFunction.Arn
+
+  OperateWaToolFunction:
+    Description: Operate WA Tool Lambda Function ARN
+    Value: !GetAtt OperateWaToolFunction.Arn

@@ -1,0 +1,631 @@
+app:
+  description: ''
+  icon: ''
+  icon_background: '#FFEAD5'
+  mode: workflow
+  name: orr-on-llm-workflow-template
+kind: app
+version: 0.1.0
+workflow:
+  environment_variables: []
+  features:
+    file_upload:
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+    opening_statement: ''
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        sourceType: parameter-extractor
+        targetType: iteration
+      id: 1722220582530-source-1722221510903-target
+      selected: false
+      source: '1722220582530'
+      sourceHandle: source
+      target: '1722221510903'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        sourceType: iteration
+        targetType: variable-aggregator
+      id: 1722221510903-source-1722223033750-target
+      selected: false
+      source: '1722221510903'
+      sourceHandle: source
+      target: '1722223033750'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: true
+        iteration_id: '1722221510903'
+        sourceType: code
+        targetType: knowledge-retrieval
+      id: 1722221535003-source-1722223390160-target
+      selected: false
+      source: '1722221535003'
+      sourceHandle: source
+      target: '1722223390160'
+      targetHandle: target
+      type: custom
+      zIndex: 1002
+    - data:
+        isInIteration: true
+        iteration_id: '1722221510903'
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: 1722223390160-source-1722223403012-target
+      selected: false
+      source: '1722223390160'
+      sourceHandle: source
+      target: '1722223403012'
+      targetHandle: target
+      type: custom
+      zIndex: 1002
+    - data:
+        isInIteration: false
+        sourceType: http-request
+        targetType: parameter-extractor
+      id: 1722325048327-source-1722492098824-target
+      selected: false
+      source: '1722325048327'
+      sourceHandle: source
+      target: '1722492098824'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        sourceType: start
+        targetType: http-request
+      id: 1722219770294-source-1722325048327-target
+      selected: false
+      source: '1722219770294'
+      sourceHandle: source
+      target: '1722325048327'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        sourceType: variable-aggregator
+        targetType: end
+      id: 1722223033750-source-1727323130945-target
+      source: '1722223033750'
+      sourceHandle: source
+      target: '1727323130945'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: true
+        iteration_id: '1722221510903'
+        sourceType: llm
+        targetType: code
+      id: 1722223403012-source-1727410146318-target
+      source: '1722223403012'
+      sourceHandle: source
+      target: '1727410146318'
+      targetHandle: target
+      type: custom
+      zIndex: 1002
+    - data:
+        isInIteration: false
+        sourceType: parameter-extractor
+        targetType: http-request
+      id: 1722492098824-source-1743164996520-target
+      source: '1722492098824'
+      sourceHandle: source
+      target: '1743164996520'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        sourceType: http-request
+        targetType: parameter-extractor
+      id: 1743164996520-source-1722220582530-target
+      source: '1743164996520'
+      sourceHandle: source
+      target: '1722220582530'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: ''
+        selected: false
+        title: Start
+        type: start
+        variables:
+        - label: orr_lens_arn
+          max_length: 200
+          options: []
+          required: true
+          type: text-input
+          variable: orr_lens_arn
+        - label: workload_name
+          max_length: 200
+          options: []
+          required: true
+          type: text-input
+          variable: workload_name
+        - label: description
+          max_length: 256
+          options: []
+          required: true
+          type: text-input
+          variable: description
+        - label: environment
+          max_length: 48
+          options:
+          - PRODUCTION
+          - PREPRODUCTION
+          required: true
+          type: select
+          variable: environment
+      height: 168
+      id: '1722219770294'
+      position:
+        x: -163.95475613460167
+        y: 98.5512234778011
+      positionAbsolute:
+        x: -163.95475613460167
+        y: 98.5512234778011
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        authorization:
+          config: null
+          type: no-auth
+        body:
+          data: ''
+          type: none
+        desc: ''
+        headers: lens_alias:{{#1722219770294.orr_lens_arn#}}
+        method: get
+        params: ''
+        selected: false
+        timeout:
+          max_connect_timeout: 0
+          max_read_timeout: 0
+          max_write_timeout: 0
+        title: GET ORR INFO
+        type: http-request
+        url: https://wt89kyw6bb.execute-api.us-west-2.amazonaws.com/default/get_lens_info
+        variables: []
+      height: 122
+      id: '1743164996520'
+      position:
+        x: 890.3427195041033
+        y: 485.0158406257764
+      positionAbsolute:
+        x: 890.3427195041033
+        y: 485.0158406257764
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: Extract questions from lens result
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: anthropic.claude-3-haiku-20240307-v1:0
+          provider: bedrock
+        parameters:
+        - description: extract "Questions" item from array
+          name: Questions
+          required: false
+          type: array[object]
+        query:
+        - '1743164996520'
+        - body
+        reasoning_mode: prompt
+        selected: false
+        title: Get Question List
+        type: parameter-extractor
+        variables: []
+      height: 126
+      id: '1722220582530'
+      position:
+        x: 699.4934010998061
+        y: 142.96243542756753
+      positionAbsolute:
+        x: 699.4934010998061
+        y: 142.96243542756753
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: ''
+        height: 214
+        iterator_selector:
+        - '1722220582530'
+        - Questions
+        output_selector:
+        - '1722223403012'
+        - text
+        output_type: array[string]
+        selected: false
+        startNodeType: code
+        start_node_id: '1722221535003'
+        title: Analyze Question upon ORR
+        type: iteration
+        width: 1592.9999999999998
+      height: 214
+      id: '1722221510903'
+      position:
+        x: 1048.6921180143643
+        y: 116.91467540246197
+      positionAbsolute:
+        x: 1048.6921180143643
+        y: 116.91467540246197
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 1593
+      zIndex: 1
+    - data:
+        code: "\ndef main(question: dict) -> dict:\n    return {\n        \"question_id\"\
+          : question[\"QuestionId\"],\n        \"question_title\": question[\"QuestionTitle\"\
+          ],\n        \"choices\": str(question[\"Choices\"])\n    }\n"
+        code_language: python3
+        desc: ''
+        isInIteration: true
+        isIterationStart: true
+        iteration_id: '1722221510903'
+        outputs:
+          choices:
+            children: null
+            type: string
+          question_id:
+            children: null
+            type: string
+          question_title:
+            children: null
+            type: string
+        selected: false
+        title: Get Question Title and Choices
+        type: code
+        variables:
+        - value_selector:
+          - '1722221510903'
+          - item
+          variable: question
+      extent: parent
+      height: 54
+      id: '1722221535003'
+      parentId: '1722221510903'
+      position:
+        x: 117
+        y: 85
+      positionAbsolute:
+        x: 1165.6921180143643
+        y: 201.91467540246197
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+      zIndex: 1001
+    - data:
+        desc: ''
+        output_type: array[string]
+        selected: false
+        title: Results Aggregator
+        type: variable-aggregator
+        variables:
+        - - '1722221510903'
+          - output
+      height: 113
+      id: '1722223033750'
+      position:
+        x: 2665.4461967299535
+        y: 533.8416263953494
+      positionAbsolute:
+        x: 2665.4461967299535
+        y: 533.8416263953494
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        dataset_ids:
+        - 35050485-aed8-4611-b855-1db486ded25f
+        desc: ''
+        isInIteration: true
+        iteration_id: '1722221510903'
+        query_variable_selector:
+        - '1722221535003'
+        - question_title
+        retrieval_mode: single
+        selected: false
+        single_retrieval_config:
+          model:
+            completion_params: {}
+            mode: chat
+            name: command-r
+            provider: cohere
+        title: Get Relevant Content from KB
+        type: knowledge-retrieval
+      extent: parent
+      height: 92
+      id: '1722223390160'
+      parentId: '1722221510903'
+      position:
+        x: 421
+        y: 87.12956465899845
+      positionAbsolute:
+        x: 1469.6921180143643
+        y: 204.0442400614604
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+      zIndex: 1002
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1722223390160'
+          - result
+        desc: ''
+        isInIteration: true
+        iteration_id: '1722221510903'
+        model:
+          completion_params:
+            temperature: 0.1
+          mode: chat
+          name: anthropic.claude-3-haiku-20240307-v1:0
+          provider: bedrock
+        prompt_template:
+        - id: bacdd939-cbbb-4b58-8626-5b62314096aa
+          role: system
+          text: "You are professional operational readiness reviewer. your goal is\
+            \ to review the application design document that tagged within <doc> following\
+            \ the rules that tagged within <rule>. after the review, you should output\
+            \ result in tag <output>. You should follow the <instuction> strictly\
+            \ to finish this task.\n<instruction>\n\n 1. please read the <doc> carefully,\
+            \ and try you best to identify whether <doc> have followed the rule listed\
+            \ in <rule>.  \n 2. In the tag <rule>, you will find the a operational\
+            \ readiness review question with specific choices in the json format of\
+            \ AWS Well-Architected custom lens. you should see the title of some choice\
+            \ as the rule to judge whether the <doc> have involve the corresponding\
+            \ content and well designed solution.\n 3. please should strictly respect\
+            \ the JSON schema in <output_format>\n 4. DO NOT return <output></output>\
+            \ tag in your output, just return json format data."
+        - id: 7172b652-6eaf-4c89-a2f8-a9521f1a4907
+          role: user
+          text: "<doc>\n{{#context#}}\n</doc>\n\n<rule>\nquestion_id:{{#1722221535003.question_id#}}\n\
+            {{#1722221535003.choices#}}\n</rule>\n\n<output_format>\n{\n  \"$schema\"\
+            : \"http://json-schema.org/draft-07/schema#\",\n  \"type\": \"object\"\
+            ,\n  \"properties\": {\n    \"question\": {\n      \"type\": \"object\"\
+            ,\n      \"properties\": {\n        \"id\": {\n          \"type\": \"\
+            string\"\n        },\n        \"choices\": {\n          \"type\": \"array\"\
+            ,\n          \"items\": {\n            \"type\": \"object\",\n       \
+            \     \"properties\": {\n              \"id\": {\n                \"type\"\
+            : \"string\"\n              },\n              \"title\": {\n         \
+            \       \"type\": \"string\"\n              },\n              \"is_fulfilled\"\
+            : {\n                \"type\": \"boolean\"\n              },\n       \
+            \       \"explanation\": {\n                \"type\": \"string\"\n   \
+            \           },\n              \"improvement_action\": {\n            \
+            \    \"type\": \"string\"\n              }\n            },\n         \
+            \   \"required\": [\"id\", \"title\", \"is_fulfilled\", \"explanation\"\
+            , \"improvement_action\"]\n          }\n        }\n      },\n      \"\
+            required\": [\"id\", \"choices\"]\n    }\n  },\n  \"required\": [\"question\"\
+            ]\n}\n</output_format>"
+        selected: false
+        title: Review Content using LLM
+        type: llm
+        variables: []
+        vision:
+          configs:
+            detail: high
+          enabled: false
+      extent: parent
+      height: 98
+      id: '1722223403012'
+      parentId: '1722221510903'
+      position:
+        x: 727.0482865008205
+        y: 85
+      positionAbsolute:
+        x: 1775.7404045151848
+        y: 201.91467540246197
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+      zIndex: 1002
+    - data:
+        authorization:
+          config: null
+          type: no-auth
+        body:
+          data: "{\n  \"workloadName\": \"{{#1722219770294.workload_name#}}\",\n \
+            \ \"description\": \"{{#1722219770294.description#}}\",\n  \"environment\"\
+            : \"{{#1722219770294.environment#}}\",\n  \"lenses\": [\"{{#1722219770294.orr_lens_arn#}}\"\
+            ],\n  \"reviewOwner\": \"test owner\"\n}"
+          type: json
+        desc: ''
+        headers: ''
+        method: post
+        params: ''
+        selected: false
+        timeout:
+          max_connect_timeout: 0
+          max_read_timeout: 0
+          max_write_timeout: 0
+        title: Create Workload
+        type: http-request
+        url: https://sk1oafqksj.execute-api.us-west-2.amazonaws.com/default/workload
+        variables: []
+      height: 122
+      id: '1722325048327'
+      position:
+        x: 194.18118766274563
+        y: 485.0158406257764
+      positionAbsolute:
+        x: 194.18118766274563
+        y: 485.0158406257764
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: ''
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: anthropic.claude-3-haiku-20240307-v1:0
+          provider: bedrock
+        parameters:
+        - description: workloadId
+          name: workloadId
+          required: false
+          type: string
+        query:
+        - '1722325048327'
+        - body
+        reasoning_mode: prompt
+        selected: false
+        title: Extractor Workload ID
+        type: parameter-extractor
+        variables: []
+      height: 98
+      id: '1722492098824'
+      position:
+        x: 602.9500976946354
+        y: 485.0158406257764
+      positionAbsolute:
+        x: 602.9500976946354
+        y: 485.0158406257764
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: ''
+        outputs:
+        - value_selector:
+          - '1722223033750'
+          - output
+          variable: output
+        - value_selector:
+          - '1722492098824'
+          - workloadId
+          variable: workload_id
+        selected: false
+        title: End
+        type: end
+      height: 116
+      id: '1727323130945'
+      position:
+        x: 2952.151296885329
+        y: 544.3350274951556
+      positionAbsolute:
+        x: 2952.151296885329
+        y: 544.3350274951556
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        code: "import json\nimport requests\n\ndef main(review_result: str,workload_id:\
+          \ str, lens_alias: str) -> dict:\n\n    review_result = json.loads(review_result)\n\
+          \    workload_id = json.loads(workload_id)['workloadId']\n\n    question\
+          \ = review_result[\"question\"]\n    selected_choices = []\n    notes =\
+          \ ''\n\n    for choice in question[\"choices\"]:\n        if choice[\"is_fulfilled\"\
+          ]:\n            selected_choices.append(choice[\"id\"])\n        notes +=\
+          \ (choice.get(\"title\", \"\") + \"\\n\" + (choice.get(\"explanation\",\
+          \ \"\") or \"\") + \"\\n\" + (choice.get(\"improvement_action\", \"\") or\
+          \ \"\") + \"\\n\")\n\n    payload = {\n        \"workloadId\": workload_id,\n\
+          \        \"lensAlias\": lens_alias,\n        \"questionId\": question[\"\
+          id\"],\n        \"choiceUpdates\": {\n            \"selectedChoices\": selected_choices,\n\
+          \            \"notes\": notes\n        }\n    }\n\n    api_url = 'https://sk1oafqksj.execute-api.us-west-2.amazonaws.com/default/workload/review'\n\
+          \n    headers = {\n    'Content-Type': 'application/json',\n    }\n\n  \
+          \  response = requests.put(api_url, headers=headers, data=json.dumps(payload))\n\
+          \n    return {\n        \"result\": response.text\n        }"
+        code_language: python3
+        dependencies:
+        - name: requests
+          version: ''
+        desc: ''
+        isInIteration: true
+        iteration_id: '1722221510903'
+        outputs:
+          result:
+            children: null
+            type: string
+        selected: false
+        title: update WA question
+        type: code
+        variables:
+        - value_selector:
+          - '1722223403012'
+          - text
+          variable: review_result
+        - value_selector:
+          - '1722325048327'
+          - body
+          variable: workload_id
+        - value_selector:
+          - '1722219770294'
+          - orr_lens_arn
+          variable: lens_alias
+      extent: parent
+      height: 54
+      id: '1727410146318'
+      parentId: '1722221510903'
+      position:
+        x: 1031.6233502749512
+        y: 85.53894733567842
+      positionAbsolute:
+        x: 2080.3154682893155
+        y: 202.45362273814038
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+      zIndex: 1002
+    viewport:
+      x: 127.65951911323964
+      y: 24.43223787108542
+      zoom: 0.48821295243580987
