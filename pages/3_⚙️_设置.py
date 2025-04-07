@@ -11,7 +11,9 @@ if os.path.exists(dotenv_path):
 
 # 初始化会话状态，优先使用环境变量
 if 'dify_api_key' not in st.session_state:
-    st.session_state.dify_api_key = os.environ.get('DIFY_API_KEY', "dataset-pJPuLRgQ5nxTH84GYEb8QBin")
+    st.session_state.dify_api_key = os.environ.get('DIFY_API_KEY', "app-pJPuLRgQ5nxTH84GYEb8QBin")
+if 'dify_dataset_api_key' not in st.session_state:
+    st.session_state.dify_dataset_api_key = os.environ.get('DIFY_DATASET_API_KEY', "dataset-pJPuLRgQ5nxTH84GYEb8QBin")
 if 'dify_api_base_url' not in st.session_state:
     st.session_state.dify_api_base_url = os.environ.get('DIFY_API_BASE_URL', "http://54.200.9.115/v1")
 if 'dify_consol_api_base_url' not in st.session_state:
@@ -46,7 +48,14 @@ with st.form("dify_settings_form"):
             "Dify API Key", 
             value=st.session_state.dify_api_key, 
             type="password",
-            help="用于访问Dify API的密钥"
+            help="用于访问Dify应用的API密钥"
+        )
+        
+        dify_dataset_api_key = st.text_input(
+            "Dify Dataset API Key", 
+            value=st.session_state.dify_dataset_api_key, 
+            type="password",
+            help="用于上传文档到知识库的Dataset API密钥（在知识库页面创建）"
         )
         
         dify_consol_api_key = st.text_input(
@@ -62,6 +71,7 @@ with st.form("dify_settings_form"):
     if submit_button:
         st.session_state.dify_api_base_url = dify_api_base_url
         st.session_state.dify_api_key = dify_api_key
+        st.session_state.dify_dataset_api_key = dify_dataset_api_key
         st.session_state.dify_consol_api_base_url = dify_consol_api_base_url
         st.session_state.dify_consol_api_key = dify_consol_api_key
         
@@ -70,6 +80,7 @@ with st.form("dify_settings_form"):
                 # 创建或更新.env文件
                 with open(dotenv_path, 'w') as f:
                     f.write(f"DIFY_API_KEY={dify_api_key}\n")
+                    f.write(f"DIFY_DATASET_API_KEY={dify_dataset_api_key}\n")
                     f.write(f"DIFY_API_BASE_URL={dify_api_base_url}\n")
                     f.write(f"DIFY_CONSOL_API_BASE_URL={dify_consol_api_base_url}\n")
                     f.write(f"DIFY_CONSOL_API_KEY={dify_consol_api_key}\n")
@@ -94,12 +105,12 @@ if st.button("测试Dify API连接"):
         # 测试Dify API
         response = requests.get(
             f"{st.session_state.dify_api_base_url}/datasets", 
-            headers={"Authorization": f"Bearer {st.session_state.dify_api_key}"}
+            headers={"Authorization": f"Bearer {st.session_state.dify_dataset_api_key}"}
         )
         if response.status_code == 200:
-            st.success("Dify API连接成功!")
+            st.success("Dify Dataset API连接成功!")
         else:
-            st.error(f"Dify API连接失败: {response.status_code} - {response.text}")
+            st.error(f"Dify Dataset API连接失败: {response.status_code} - {response.text}")
     except Exception as e:
         st.error(f"连接错误: {str(e)}")
 
@@ -109,12 +120,14 @@ with st.expander("高级设置"):
     
     # 重置为默认值
     if st.button("重置为默认值"):
-        default_api_key = "dataset-pJPuLRgQ5nxTH84GYEb8QBin"
+        default_api_key = "app-pJPuLRgQ5nxTH84GYEb8QBin"
+        default_dataset_api_key = "dataset-pJPuLRgQ5nxTH84GYEb8QBin"
         default_api_base_url = "http://54.200.9.115/v1"
         default_consol_api_base_url = "http://54.200.9.115/console/api/apps"
         default_consol_api_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZDYyMDYzZmUtZGQ3OC00MTI5LTgxMjktY2U5MzI5MmQ0MTUyIiwiZXhwIjoxNzQ1NzU1OTEzLCJpc3MiOiJTRUxGX0hPU1RFRCIsInN1YiI6IkNvbnNvbGUgQVBJIFBhc3Nwb3J0In0.3iM2eg0EUHII-3LlsEIEzoGYpYLOjEL3m_7NDUm8fxY"
         
         st.session_state.dify_api_key = default_api_key
+        st.session_state.dify_dataset_api_key = default_dataset_api_key
         st.session_state.dify_api_base_url = default_api_base_url
         st.session_state.dify_consol_api_base_url = default_consol_api_base_url
         st.session_state.dify_consol_api_key = default_consol_api_key
@@ -123,6 +136,7 @@ with st.expander("高级设置"):
         try:
             with open(dotenv_path, 'w') as f:
                 f.write(f"DIFY_API_KEY={default_api_key}\n")
+                f.write(f"DIFY_DATASET_API_KEY={default_dataset_api_key}\n")
                 f.write(f"DIFY_API_BASE_URL={default_api_base_url}\n")
                 f.write(f"DIFY_CONSOL_API_BASE_URL={default_consol_api_base_url}\n")
                 f.write(f"DIFY_CONSOL_API_KEY={default_consol_api_key}\n")

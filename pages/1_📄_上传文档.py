@@ -14,13 +14,13 @@ if os.path.exists(dotenv_path):
     dotenv.load_dotenv(dotenv_path)
 
 # 初始化会话状态，优先使用环境变量
-if 'dify_api_key' not in st.session_state:
-    st.session_state.dify_api_key = os.environ.get('DIFY_API_KEY', "dataset-pJPuLRgQ5nxTH84GYEb8QBin")
+if 'dify_dataset_api_key' not in st.session_state:
+    st.session_state.dify_dataset_api_key = os.environ.get('DIFY_DATASET_API_KEY', "dataset-pJPuLRgQ5nxTH84GYEb8QBin")
 if 'dify_api_base_url' not in st.session_state:
     st.session_state.dify_api_base_url = os.environ.get('DIFY_API_BASE_URL', "http://54.200.9.115/v1")
 
 # 使用会话状态中的配置
-DIFY_API_KEY = st.session_state.dify_api_key
+DIFY_DATASET_API_KEY = st.session_state.dify_dataset_api_key
 DIFY_API_BASE_URL = st.session_state.dify_api_base_url
 
 # 移除侧边栏显示Dify配置和设置链接
@@ -32,7 +32,7 @@ def is_text_file(file):
 def create_kb(name):
     url = f"{DIFY_API_BASE_URL}/datasets"
     headers = {
-        "Authorization": f"Bearer {DIFY_API_KEY}",
+        "Authorization": f"Bearer {DIFY_DATASET_API_KEY}",
         "Content-Type": "application/json"
     }
     data = {"name": name}
@@ -41,13 +41,13 @@ def create_kb(name):
 
 def get_kb_list():
     url = f"{DIFY_API_BASE_URL}/datasets"
-    headers = {"Authorization": f"Bearer {DIFY_API_KEY}"}
+    headers = {"Authorization": f"Bearer {DIFY_DATASET_API_KEY}"}
     response = requests.get(url, headers=headers)
     return response.json().get("data", [])
 
 def get_kb_documents(kb_id, page=1, limit=20):
     url = f"{DIFY_API_BASE_URL}/datasets/{kb_id}/documents"
-    headers = {"Authorization": f"Bearer {DIFY_API_KEY}"}
+    headers = {"Authorization": f"Bearer {DIFY_DATASET_API_KEY}"}
     params = {
         "page": page,
         "limit": limit
@@ -63,7 +63,7 @@ def upload_document(kb_id, file_content, file_name, is_text=True):
     if is_text:
         url = f"{DIFY_API_BASE_URL}/datasets/{kb_id}/document/create_by_text"
         headers = {
-            "Authorization": f"Bearer {DIFY_API_KEY}",
+            "Authorization": f"Bearer {DIFY_DATASET_API_KEY}",
             "Content-Type": "application/json"
         }
         data = {
@@ -88,7 +88,7 @@ def upload_document(kb_id, file_content, file_name, is_text=True):
     else:
         url = f"{DIFY_API_BASE_URL}/datasets/{kb_id}/document/create_by_file"
         headers = {
-            "Authorization": f"Bearer {DIFY_API_KEY}",
+            "Authorization": f"Bearer {DIFY_DATASET_API_KEY}",
         }
         files = {
             'file': (file_name, file_content, mimetypes.guess_type(file_name)[0])
@@ -117,6 +117,9 @@ def upload_document(kb_id, file_content, file_name, is_text=True):
     return response.json()
 
 st.title("知识库管理助手")
+
+# 显示提示信息
+st.info("注意：上传文档需要使用 Dify Dataset API Key，请确保在设置页面中正确配置。")
 
 # 选择知识库
 kb_option = st.radio("选择知识库操作", ("使用现有知识库", "创建新知识库"))

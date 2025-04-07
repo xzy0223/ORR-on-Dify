@@ -44,14 +44,30 @@ export DIFY_API_BASE_URL=http://12.34.56.78:80
    - 打开浏览器访问 Dify URL
    - 注册并登录 Dify 控制台
    - 创建一个新应用
-   - 在 API 密钥设置中生成 Dataset API Key 和 Console API Key
+   - 在 API 密钥设置中生成 API Key
    - 设置环境变量：
    ```bash
-   export DIFY_API_KEY=your-dataset-api-key
+   export DIFY_API_KEY=your-api-key
+   ```
+
+4. 创建知识库并获取 Dataset API Key：
+   - 在 Dify 控制台中，进入知识库页面
+   - 创建一个新的知识库
+   - 在知识库详情页面，生成 Dataset API Key（重要：上传文档功能需要使用此密钥）
+   - 设置环境变量：
+   ```bash
+   export DIFY_DATASET_API_KEY=your-dataset-api-key
+   ```
+
+5. 获取 Console API 密钥：
+   - 打开浏览器访问 Dify URL
+   - 打开浏览器开发者模式
+   - 通过网络请求找到 Console API Key
+   ```bash
    export DIFY_CONSOL_API_KEY=your-console-api-key
    ```
 
-4. 返回项目根目录并运行安装脚本：
+6. 返回项目根目录并运行安装脚本：
 ```bash
 cd ../..
 ./setup.sh
