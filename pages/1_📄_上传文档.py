@@ -36,8 +36,19 @@ def create_kb(name):
         "Content-Type": "application/json"
     }
     data = {"name": name}
-    response = requests.post(url, headers=headers, json=data)
-    return response.json()
+    try:
+        response = requests.post(url, headers=headers, json=data)
+        response.raise_for_status()  # 检查HTTP错误
+        return response.json()
+    except requests.exceptions.JSONDecodeError as e:
+        st.error(f"无法解析API响应。请检查API端点是否正确: {str(e)}")
+        return {"error": "JSON解析错误"}
+    except requests.exceptions.RequestException as e:
+        st.error(f"创建知识库时发生请求错误: {str(e)}")
+        return {"error": f"请求错误: {str(e)}"}
+    except Exception as e:
+        st.error(f"创建知识库时发生未知错误: {str(e)}")
+        return {"error": f"未知错误: {str(e)}"}
 
 def get_kb_list():
     url = f"{DIFY_API_BASE_URL}/datasets"
@@ -170,13 +181,15 @@ else:
     if st.button("创建知识库"):
         if new_kb_name:
             result = create_kb(new_kb_name)
-            if "id" in result:
+            if "error" in result:
+                st.error(f"创建知识库失败: {result['error']}")
+            elif "id" in result:
                 st.success(f"知识库 '{new_kb_name}' 创建成功！")
                 selected_kb_id = result["id"]
                 # 将新创建的知识库ID存储在session_state中
                 st.session_state.selected_kb_id = selected_kb_id
             else:
-                st.error("创建知识库失败，请重试。")
+                st.error(f"创建知识库失败，返回了意外的响应: {result}")
         else:
             st.warning("请输入知识库名称。")
 
