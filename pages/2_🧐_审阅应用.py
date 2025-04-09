@@ -20,6 +20,8 @@ if os.path.exists(dotenv_path):
 # 初始化会话状态，优先使用环境变量
 if 'dify_api_key' not in st.session_state:
     st.session_state.dify_api_key = os.environ.get('DIFY_API_KEY', "dataset-pJPuLRgQ5nxTH84GYEb8QBin")
+if 'dify_dataset_api_key' not in st.session_state:
+    st.session_state.dify_dataset_api_key = os.environ.get('DIFY_DATASET_API_KEY', os.environ.get('DIFY_API_KEY', "dataset-pJPuLRgQ5nxTH84GYEb8QBin"))
 if 'dify_api_base_url' not in st.session_state:
     st.session_state.dify_api_base_url = os.environ.get('DIFY_API_BASE_URL', "http://54.200.9.115/v1")
 if 'dify_consol_api_base_url' not in st.session_state:
@@ -28,7 +30,7 @@ if 'dify_consol_api_key' not in st.session_state:
     st.session_state.dify_consol_api_key = os.environ.get('DIFY_CONSOL_API_KEY', "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZDYyMDYzZmUtZGQ3OC00MTI5LTgxMjktY2U5MzI5MmQ0MTUyIiwiZXhwIjoxNzMzOTkyMDM4LCJpc3MiOiJTRUxGX0hPU1RFRCIsInN1YiI6IkNvbnNvbGUgQVBJIFBhc3Nwb3J0In0.ASN8pExHXJ7w1-wn8qm13Bw1d8X0x_xZIuO9nKF1FDU")
 
 # 使用会话状态中的配置
-DIFY_API_KEY = st.session_state.dify_api_key
+DIFY_API_KEY = st.session_state.dify_dataset_api_key  # 使用dataset API key而不是普通API key
 DIFY_API_BASE_URL = st.session_state.dify_api_base_url
 DIFY_CONSOL_API_BASE_URL = st.session_state.dify_consol_api_base_url
 DIFY_CONSOL_API_KEY = st.session_state.dify_consol_api_key
@@ -54,8 +56,24 @@ def load_yaml_file(file_path):
 def get_kb_list():
     url = f"{DIFY_API_BASE_URL}/datasets"
     headers = {"Authorization": f"Bearer {DIFY_API_KEY}"}
-    response = requests.get(url, headers=headers)
-    return response.json().get("data", [])
+    
+    try:
+        response = requests.get(url, headers=headers)
+        
+        if response.status_code != 200:
+            st.error(f"API错误: {response.status_code} - {response.text}")
+            return []
+            
+        data = response.json()
+        
+        if "data" not in data:
+            st.warning("API响应中不包含'data'字段")
+            return []
+            
+        return data.get("data", [])
+    except Exception as e:
+        st.error(f"获取知识库列表时发生错误: {str(e)}")
+        return []
 
 def create_workflow(config):
     url = f"{DIFY_CONSOL_API_BASE_URL}/import"
@@ -199,25 +217,99 @@ def step_1():
                     st.experimental_rerun()
         
 def step_2():
-    st.header("Step 2: Select Knowledge Base")
-    # 步骤2的逻辑
-    if 'selected_kb_id' in st.session_state:
-        kb_id = st.session_state.selected_kb_id
-        kb_list = get_kb_list()
-        for kb in kb_list:
-            if kb['id'] == kb_id:
-                kb = kb['name']
-                st.session_state.selected_kb = kb
-                break
-        st.info(f"Using previously selected knowledge base: {kb}")
-        
-        if st.button("Next"):
-            st.session_state.step = 3
-            st.experimental_rerun()
+    st.header("Step 2: 选择知识库")
     
-    else:
-        st.warning("No knowledge base selected. Please select a knowledge base in the other page first.")
-        return
+    # 显示API配置信息
+    with st.expander("API配置信息"):
+        st.write(f"Dify API Base URL: {DIFY_API_BASE_URL}")
+        st.write(f"Dify Dataset API Key: {DIFY_API_KEY[:5]}...{DIFY_API_KEY[-5:] if len(DIFY_API_KEY) > 10 else ''}")
+        st.write(f"使用的API密钥类型: {'Dataset API Key' if DIFY_API_KEY.startswith('dataset-') else 'Regular API Key'}")
+    
+    # 添加手动刷新按钮
+    if st.button("🔄 刷新知识库列表"):
+        st.session_state.kb_list_cache = None
+        st.experimental_rerun()
+    
+    # 获取知识库列表
+    try:
+        if 'kb_list_cache' not in st.session_state:
+            with st.spinner("正在获取知识库列表..."):
+                kb_list = get_kb_list()
+                st.session_state.kb_list_cache = kb_list
+        else:
+            kb_list = st.session_state.kb_list_cache
+        
+        # 检查是否有预先选择的知识库ID
+        if 'selected_kb_id' in st.session_state:
+            kb_id = st.session_state.selected_kb_id
+            
+            # 查找匹配的知识库
+            kb_name = None
+            for kb in kb_list:
+                if kb['id'] == kb_id:
+                    kb_name = kb['name']
+                    st.session_state.selected_kb = kb_name
+                    break
+            
+            if kb_name:
+                st.success(f"已选择知识库: {kb_name}")
+                
+                if st.button("下一步"):
+                    st.session_state.step = 3
+                    st.experimental_rerun()
+            else:
+                st.warning(f"找不到ID为 {kb_id} 的知识库，请重新选择")
+                # 重置选择
+                if 'selected_kb_id' in st.session_state:
+                    del st.session_state.selected_kb_id
+                if 'selected_kb' in st.session_state:
+                    del st.session_state.selected_kb
+        
+        # 显示可用的知识库列表
+        if kb_list:
+            st.subheader("可用的知识库")
+            kb_options = [f"{kb['name']} (ID: {kb['id']})" for kb in kb_list]
+            selected_option = st.selectbox("选择知识库:", kb_options)
+            
+            if selected_option:
+                selected_id = selected_option.split("ID: ")[1].strip(")")
+                selected_name = selected_option.split(" (ID:")[0]
+                
+                if st.button("使用此知识库"):
+                    st.session_state.selected_kb_id = selected_id
+                    st.session_state.selected_kb = selected_name
+                    st.success(f"已选择知识库: {selected_name}")
+                    st.experimental_rerun()
+        else:
+            st.error("没有找到任何知识库。请先在「上传文档」页面创建知识库。")
+            
+    except Exception as e:
+        st.error(f"获取知识库列表时发生错误: {str(e)}")
+        st.info("请检查API配置是否正确，并确保Dify服务可访问。")
+        
+        # 提供修复建议
+        st.subheader("可能的解决方案")
+        st.markdown("""
+        1. 检查「设置」页面中的API配置是否正确
+        2. 确保使用的是Dataset API Key而不是普通API Key
+        3. 确认Dify服务器是否正常运行
+        4. 检查网络连接是否正常
+        """)
+        
+        # 提供手动输入选项
+        st.subheader("手动输入知识库信息")
+        manual_kb_id = st.text_input("知识库ID:", value=st.session_state.get('selected_kb_id', ''))
+        manual_kb_name = st.text_input("知识库名称:", value=st.session_state.get('selected_kb', ''))
+        
+        if st.button("使用手动输入的知识库"):
+            if manual_kb_id and manual_kb_name:
+                st.session_state.selected_kb_id = manual_kb_id
+                st.session_state.selected_kb = manual_kb_name
+                st.success(f"已手动设置知识库: {manual_kb_name}")
+                
+                if st.button("继续下一步"):
+                    st.session_state.step = 3
+                    st.experimental_rerun()
     
 def step_3():
     st.header("Step 3: Create Workflow")

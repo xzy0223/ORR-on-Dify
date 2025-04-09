@@ -215,7 +215,7 @@ workflow:
           max_write_timeout: 0
         title: GET ORR INFO
         type: http-request
-        url: https://wt89kyw6bb.execute-api.us-west-2.amazonaws.com/default/get_lens_info
+        url: https://jhqjqem40d.execute-api.us-west-2.amazonaws.com/dev/get_lens_info
         variables: []
       height: 122
       id: '1743164996520'
@@ -374,8 +374,8 @@ workflow:
           model:
             completion_params: {}
             mode: chat
-            name: command-r
-            provider: cohere
+            name: anthropic.claude-3-haiku-20240307-v1:0
+            provider: bedrock
         title: Get Relevant Content from KB
         type: knowledge-retrieval
       extent: parent
@@ -490,7 +490,7 @@ workflow:
           max_write_timeout: 0
         title: Create Workload
         type: http-request
-        url: https://sk1oafqksj.execute-api.us-west-2.amazonaws.com/default/workload
+        url: https://n0bpbvnxtj.execute-api.us-west-2.amazonaws.com/dev/workload
         variables: []
       height: 122
       id: '1722325048327'
@@ -578,7 +578,7 @@ workflow:
           \ \"\") + \"\\n\")\n\n    payload = {\n        \"workloadId\": workload_id,\n\
           \        \"lensAlias\": lens_alias,\n        \"questionId\": question[\"\
           id\"],\n        \"choiceUpdates\": {\n            \"selectedChoices\": selected_choices,\n\
-          \            \"notes\": notes\n        }\n    }\n\n    api_url = 'https://sk1oafqksj.execute-api.us-west-2.amazonaws.com/default/workload/review'\n\
+          \            \"notes\": notes\n        }\n    }\n\n    api_url = 'https://n0bpbvnxtj.execute-api.us-west-2.amazonaws.com/dev/workload/review'\n\
           \n    headers = {\n    'Content-Type': 'application/json',\n    }\n\n  \
           \  response = requests.put(api_url, headers=headers, data=json.dumps(payload))\n\
           \n    return {\n        \"result\": response.text\n        }"

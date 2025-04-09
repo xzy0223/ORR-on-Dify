@@ -95,7 +95,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - wellarchitected:CreateWorkload
-                  - wellarchitected:UpdateAnswers
+                  - wellarchitected:UpdateAnswer
                 Resource: '*'
 
   # API Gateway for get_lens_info

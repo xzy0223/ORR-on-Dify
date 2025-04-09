@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # 检查必要的环境变量
-if [ -z "$DIFY_API_BASE_URL" ]; then
-    echo "错误: 环境变量 DIFY_API_BASE_URL 未设置"
+if [ -z "$DIFY_HOST_URL" ]; then
+    echo "错误: 环境变量 DIFY_HOST_URL 未设置"
     echo "请先运行 Dify 部署脚本并设置环境变量:"
-    echo "export DIFY_API_BASE_URL=http://your-dify-url"
+    echo "export DIFY_HOST_URL=http://your-dify-host-url"
     exit 1
 fi
 
@@ -71,8 +71,8 @@ echo "正在设置环境变量..."
 cat > .env << EOL
 # Dify API 配置
 DIFY_API_KEY=${DIFY_API_KEY}
-DIFY_API_BASE_URL=${DIFY_API_BASE_URL}/v1
-DIFY_CONSOL_API_BASE_URL=${DIFY_API_BASE_URL}/console/api/apps
+DIFY_API_BASE_URL=${DIFY_HOST_URL}/v1
+DIFY_CONSOL_API_BASE_URL=${DIFY_HOST_URL}/console/api/apps
 DIFY_CONSOL_API_KEY=${DIFY_CONSOL_API_KEY}
 # Dify Dataset API Key (用于上传文档)
 DIFY_DATASET_API_KEY=${DIFY_DATASET_API_KEY:-${DIFY_API_KEY}}

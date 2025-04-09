@@ -76,6 +76,10 @@ echo "              重要输出信息                           "
 echo "===================================================="
 HOST_URL=$(aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].Outputs[?OutputKey=='Host'].OutputValue" --output text --region $REGION)
 echo "Dify 访问地址: $HOST_URL"
+echo ""
+echo "请设置以下环境变量:"
+echo "export DIFY_HOST_URL=$HOST_URL"
+echo ""
 
 # 获取其他可能的重要输出
 INSTANCE_ID=$(aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].Outputs[?contains(OutputKey,'Instance')].OutputValue" --output text --region $REGION)
