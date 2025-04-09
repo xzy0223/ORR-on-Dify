@@ -37,7 +37,7 @@
 
 2. 设置环境变量：
 ```bash
-export DIFY_API_BASE_URL=http://12.34.56.78:80
+export DIFY_HOST_URL=http://12.34.56.78:80
 ```
 
 3. 访问 Dify 控制台并创建 API 密钥：
@@ -52,8 +52,7 @@ export DIFY_API_BASE_URL=http://12.34.56.78:80
 
 4. 创建知识库并获取 Dataset API Key：
    - 在 Dify 控制台中，进入知识库页面
-   - 创建一个新的知识库
-   - 在知识库详情页面，生成 Dataset API Key（重要：上传文档功能需要使用此密钥）
+   - 在知识库页面，生成 Dataset API Key（重要：上传文档功能需要使用此密钥）
    - 设置环境变量：
    ```bash
    export DIFY_DATASET_API_KEY=your-dataset-api-key
@@ -67,7 +66,13 @@ export DIFY_API_BASE_URL=http://12.34.56.78:80
    export DIFY_CONSOL_API_KEY=your-console-api-key
    ```
 
-6. 返回项目根目录并运行安装脚本：
+6. 配置模型供应商
+   - 在Dify控制台中，进入Settings
+   - 在Model Provider中选择AWS Bedrock
+   - 提前准备好具有Bedrock访问权限IAM User的Access Key和Secret Key
+   - 填入必要信息并保存
+
+7. 返回项目根目录并运行安装脚本：
 ```bash
 cd ../..
 ./setup.sh
